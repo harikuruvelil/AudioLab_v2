@@ -688,16 +688,14 @@ export default function App() {
                   </select>
                 </label>
                 <label className="v2-field">
-                  Wet mix: {Math.round((playback.reverbWet / 0.6) * 100)}%
+                  Wet mix: {Math.round(playback.reverbWet * 100)}%
                   <input
                     type="range"
                     min={0}
-                    max={100}
-                    value={Math.round((playback.reverbWet / 0.6) * 100)}
+                    max={60}
+                    value={Math.round(playback.reverbWet * 100)}
                     onChange={(event) =>
-                      engine.setReverbWet(
-                        (Number(event.target.value) / 100) * 0.6,
-                      )
+                      engine.setReverbWet(Number(event.target.value) / 100)
                     }
                   />
                 </label>
