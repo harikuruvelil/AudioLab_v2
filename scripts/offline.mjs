@@ -6,7 +6,6 @@ const shell = [
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./worklets/output-guard.js",
   ...assets.map((file) => "./assets/" + file),
 ];
 const template = await readFile("public/sw.js", "utf8");

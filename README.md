@@ -28,7 +28,7 @@ Apple browsers retain AudioBuffer playback for reliable linked pitch/rate with W
 
 Quality labels compare the original WAV/FLAC header rate against the audio-context rate rather than reading the already-resampled decoded buffer. Other codecs display an unknown source rate instead of guessing. A rate match is not a claim of bit-perfect output.
 
-Conservative gain headroom covers stacked EQ boosts. A stereo output guard adds one render quantum of delay and bounds unexpected peaks. Large EQ boosts can lower overall loudness; this is expected headroom behavior. If AudioWorklet is unavailable, the app reports it and keeps headroom, but cannot enforce the final ceiling.
+Conservative gain headroom covers stacked EQ boosts. A stereo output guard adds one render quantum of delay and bounds unexpected peaks. Its processor is bundled with the app and loaded through a temporary local Blob URL, so a fresh offline start needs no separate worklet request. Large EQ boosts can lower overall loudness; this is expected headroom behavior. If AudioWorklet is unavailable, the app reports it and keeps headroom, but cannot enforce the final ceiling.
 
 ## Build and publish
 

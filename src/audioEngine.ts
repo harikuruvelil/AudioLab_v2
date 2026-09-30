@@ -9,6 +9,7 @@ import {
   readSourceSampleRate,
   requiresBufferedPlayback,
 } from "./audioMetadata";
+import outputGuardSource from "./worklets/output-guard.js?raw";
 import type {
   EqBand,
   EqGraphCurve,
@@ -192,13 +193,12 @@ export class TapeAudioEngine {
       this.filters = this.state.eqBands.map(() => ctx.createBiquadFilter());
       this.dry.connect(this.master);
       this.contextPromise = (async () => {
+        const moduleUrl = URL.createObjectURL(
+          new Blob([outputGuardSource], { type: "application/javascript" }),
+        );
         try {
-          await ctx.audioWorklet.addModule(
-            new URL(
-              `${import.meta.env.BASE_URL}worklets/output-guard.js`,
-              document.baseURI,
-            ).href,
-          );
+          // Keep the processor with the app bundle, including a fresh offline start.
+          await ctx.audioWorklet.addModule(moduleUrl);
           if (this.disposed) return;
           this.limiter = new AudioWorkletNode(ctx, "output-guard", {
             numberOfInputs: 1,
@@ -223,6 +223,8 @@ export class TapeAudioEngine {
               "Output protection unavailable. Extra headroom remains enabled.",
             );
           }
+        } finally {
+          URL.revokeObjectURL(moduleUrl);
         }
         if (this.disposed) return;
         this.connectInput();

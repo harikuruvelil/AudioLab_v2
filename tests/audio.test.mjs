@@ -10,6 +10,7 @@ const compile = async (path) => {
     write: false,
     format: "esm",
     platform: "node",
+    loader: { ".js": "text" },
     define: { "import.meta.env.BASE_URL": '"./"' },
   });
   return import(
@@ -266,7 +267,7 @@ test("output guard preserves stereo and bounds full-scale overloads", async () =
     },
   });
   vm.runInContext(
-    await readFile("public/worklets/output-guard.js", "utf8"),
+    await readFile("src/worklets/output-guard.js", "utf8"),
     context,
   );
   const guard = new Processor();
@@ -315,7 +316,7 @@ test("output guard passes ordinary mono equally to both channels after one quant
     },
   });
   vm.runInContext(
-    await readFile("public/worklets/output-guard.js", "utf8"),
+    await readFile("src/worklets/output-guard.js", "utf8"),
     context,
   );
   const guard = new Processor(),

@@ -14,6 +14,7 @@ Date: 2026-09-30. This record distinguishes browser verification from checks tha
 - Two-track queue priority and consumption, previous-track navigation, shuffle advancement, and stopping after a shuffle cycle with repeat off checked.
 - Paused update activates and reloads the new release while preserving library/settings. An update-handler race and stale HTTP-cached HTML were found and corrected during verification.
 - Preview server stopped, its listening port confirmed closed, then browser reloaded successfully from the installed shell. Stored audio, the output worklet, fonts, EQ settings, and previously used reverb remained available offline.
+- A separate fresh offline start verified the bundled output guard without its former external module request; no protection-unavailable notice or browser error appeared. The disabled scope remains completely unmounted after reload.
 - Original local checkout is clean. Original remote `main` remains `f05263b1d96163c438eb467704b847776bab1dc0`; original `gh-pages` remains `9b196c175c62a2e0f47d25a29990344f49a56dd9`.
 
 ## Physical iPhone check still required
