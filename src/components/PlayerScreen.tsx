@@ -21,6 +21,7 @@ export function PlayerScreen({
   engine,
   playback,
   track,
+  scopeEnabled,
   scopeVisible,
   fps,
   color,
@@ -36,6 +37,7 @@ export function PlayerScreen({
   engine: TapeAudioEngine;
   playback: PlaybackState;
   track: TrackMeta | null;
+  scopeEnabled: boolean;
   scopeVisible: boolean;
   fps: number;
   color: string;
@@ -125,13 +127,15 @@ export function PlayerScreen({
           <span role="status">Output peak protected</span>
         )}
       </div>
-      <Oscilloscope
-        engine={engine}
-        playing={playback.isPlaying}
-        visible={scopeVisible}
-        fps={fps}
-        color={color}
-      />
+      {scopeEnabled && (
+        <Oscilloscope
+          engine={engine}
+          playing={playback.isPlaying}
+          visible={scopeVisible}
+          fps={fps}
+          color={color}
+        />
+      )}
       <label className="v2-visually-hidden" htmlFor="seek">
         Playback position
       </label>

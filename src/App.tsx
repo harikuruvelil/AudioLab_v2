@@ -581,6 +581,7 @@ export default function App() {
             engine={engine}
             playback={playback}
             track={track}
+            scopeEnabled={waveform}
             scopeVisible={waveform && visible && !sheet && !locked}
             fps={fps}
             color={color}

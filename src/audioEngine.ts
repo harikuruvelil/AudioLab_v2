@@ -62,7 +62,7 @@ export class TapeAudioEngine {
     Promise<{ buffer: AudioBuffer; rate: number | null }>
   >();
   private pendingMetadata: (() => void) | null = null;
-  private renderVisible = true;
+  private renderVisible = false;
   private state: PlaybackState = {
     trackId: null,
     isReady: false,
