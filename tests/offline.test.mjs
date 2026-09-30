@@ -8,6 +8,7 @@ function worker() {
   const events = {},
     stores = new Map(),
     fetched = [],
+    precached = [],
     messages = [],
     scope = "https://example.test/AudioLab_v2/";
   const caches = {
@@ -16,7 +17,10 @@ function worker() {
       const entries = stores.get(name);
       return {
         async addAll(urls) {
-          for (const url of urls) entries.set(url, `installed:${url}`);
+          for (const request of urls) {
+            precached.push(request);
+            entries.set(request.url, `installed:${request.url}`);
+          }
         },
         async match(request) {
           return entries.get(
@@ -24,7 +28,10 @@ function worker() {
           );
         },
         async put(request, response) {
-          entries.set(request.url, response);
+          entries.set(
+            typeof request === "string" ? request : request.url,
+            response,
+          );
         },
       };
     },
@@ -74,13 +81,14 @@ function worker() {
   vm.runInNewContext(
     template
       .replace("__VERSION__", "test")
+      .replace("/* SHELL_FILES */ []", JSON.stringify(["./assets/main.js"]))
       .replace(
-        "/* SHELL_FILES */ []",
-        JSON.stringify(["./index.html", "./assets/main.js"]),
+        '/* INDEX_HTML */ ""',
+        JSON.stringify('<html><script src="./assets/main.js"></script></html>'),
       ),
-    { self, caches, fetch, URL },
+    { self, caches, fetch, URL, Request, Response },
   );
-  return { events, stores, fetched, messages, scope };
+  return { events, stores, fetched, precached, messages, scope };
 }
 async function life(worker, name, data = {}) {
   let result;
@@ -107,12 +115,25 @@ test("offline worker serves a coherent installed HTML and asset without network"
   const w = worker();
   await life(w, "install");
   assert.equal(
-    await request(w, w.scope, "navigate"),
-    `installed:${w.scope}index.html`,
+    await (await request(w, w.scope, "navigate")).text(),
+    '<html><script src="./assets/main.js"></script></html>',
   );
   assert.equal(
     await request(w, `${w.scope}assets/main.js`),
     `installed:${w.scope}assets/main.js`,
+  );
+  assert.equal(w.fetched.length, 0);
+});
+test("installation binds HTML to the built release and reloads cached public assets", async () => {
+  const w = worker();
+  await life(w, "install");
+  assert.ok(w.precached.every((request) => request.cache === "reload"));
+  assert.ok(
+    w.precached.every((request) => !request.url.endsWith("index.html")),
+  );
+  assert.equal(
+    await (await request(w, w.scope, "navigate")).text(),
+    '<html><script src="./assets/main.js"></script></html>',
   );
   assert.equal(w.fetched.length, 0);
 });

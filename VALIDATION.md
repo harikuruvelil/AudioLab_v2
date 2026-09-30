@@ -5,14 +5,14 @@ Date: 2026-09-30. This record distinguishes browser verification from checks tha
 ## Completed
 
 - Production TypeScript/Vite build passes; generated service worker passes JavaScript syntax validation.
-- All 16 automated checks pass. They cover original sample-rate metadata, stale/rapid load cancellation, serialized decoding, pause/clear during loading, bypassed processing connections, stacked EQ headroom, stereo/mono peak protection, and offline-cache behavior.
+- All 17 automated checks pass. They cover original sample-rate metadata, stale/rapid load cancellation, serialized decoding, pause/clear during loading, bypassed processing connections, stacked EQ headroom, stereo/mono peak protection, and offline-cache behavior. Installation embeds the matching built HTML and reloads public assets to prevent mixed releases from HTTP caches.
 - Dependency audit: zero known vulnerabilities reported for the installed dependency tree.
 - Chromium browser: imported and played synthetic 45-second stereo WAVs with a 44,100 Hz source. The 48,000 Hz output context correctly reports resampling. Speed changes, EQ edits, and Auditorium reverb operate without reported browser errors.
 - Mobile layouts checked at 393 × 852, 852 × 393, and 320 × 568. Settings have one modal and one scroll region; headers remain separate from scrolling content. No horizontal overflow was observed.
 - Scope loop stops behind settings, in dark-screen mode, when paused, and when scrolled out of view. It resumes when visible during playback. The display control retains the 120 Hz maximum.
 - Native modal focus containment, Escape dismissal, and focus restoration checked.
 - Two-track queue priority and consumption, previous-track navigation, shuffle advancement, and stopping after a shuffle cycle with repeat off checked.
-- Paused update activates and reloads the new release while preserving library/settings. A race in the earlier update handler was found and corrected before publication.
+- Paused update activates and reloads the new release while preserving library/settings. An update-handler race and stale HTTP-cached HTML were found and corrected during verification.
 - Preview server stopped, its listening port confirmed closed, then browser reloaded successfully from the installed shell. Stored audio, the output worklet, fonts, EQ settings, and previously used reverb remained available offline.
 - Original local checkout is clean. Original remote `main` remains `f05263b1d96163c438eb467704b847776bab1dc0`; original `gh-pages` remains `9b196c175c62a2e0f47d25a29990344f49a56dd9`.
 

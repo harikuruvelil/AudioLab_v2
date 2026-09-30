@@ -1,15 +1,26 @@
 const CACHE_NAME = "audiolab-v2-shell-__VERSION__";
 const APP_SHELL = /* SHELL_FILES */ [];
+const INDEX_HTML = /* INDEX_HTML */ "";
 const ROOMS_CACHE = "audiolab-v2-rooms";
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(CACHE_NAME)
-      .then((cache) =>
-        cache.addAll(
-          APP_SHELL.map((path) => new URL(path, self.registration.scope).href),
+    caches.open(CACHE_NAME).then(async (cache) => {
+      await cache.addAll(
+        APP_SHELL.map(
+          (path) =>
+            new Request(new URL(path, self.registration.scope).href, {
+              cache: "reload",
+            }),
         ),
-      ),
+      );
+      // HTML is compiled into this worker so HTTP/CDN caches cannot mix releases.
+      await cache.put(
+        new URL("index.html", self.registration.scope).href,
+        new Response(INDEX_HTML, {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        }),
+      );
+    }),
   );
 });
 self.addEventListener("activate", (event) => {
