@@ -25,6 +25,13 @@ import { Equalizer } from "./components/Equalizer";
 import { Sheet } from "./components/Sheet";
 import { Toast } from "./components/Toast";
 import { DarkScreen } from "./components/DarkScreen";
+import { AmbientBackground } from "./components/AmbientBackground";
+import {
+  ICON_LIBRARY,
+  ICON_MINUS,
+  ICON_MOON,
+  ICON_WAVEFORM,
+} from "./components/Icons";
 import { applyUpdate } from "./updates";
 import type {
   EqBand,
@@ -35,6 +42,7 @@ import type {
 } from "./types";
 
 const KEY = "audiolab-v2-settings";
+// `mesh` is the ambient background: base colour, then four light sources.
 const themes = [
   {
     id: "arctic",
@@ -44,6 +52,7 @@ const themes = [
     bg: "#0A1220",
     bgDeep: "#060B15",
     tint: "rgba(180, 223, 255, 0.26)",
+    mesh: ["#020817", "#1F5CF5", "#14B8E0", "#6A3AE6", "#7FE3FA"],
   },
   {
     id: "mint",
@@ -53,6 +62,7 @@ const themes = [
     bg: "#081A18",
     bgDeep: "#05110F",
     tint: "rgba(143, 255, 218, 0.24)",
+    mesh: ["#02100D", "#0BB58A", "#0A86B8", "#2D4FD8", "#8AF0CC"],
   },
   {
     id: "sunset",
@@ -62,6 +72,7 @@ const themes = [
     bg: "#1A101D",
     bgDeep: "#0D0812",
     tint: "rgba(255, 184, 150, 0.24)",
+    mesh: ["#13040B", "#F24E2C", "#E0236F", "#6A2AD8", "#F7AE5C"],
   },
   {
     id: "midnight",
@@ -71,6 +82,7 @@ const themes = [
     bg: "#090B1A",
     bgDeep: "#04060F",
     tint: "rgba(184, 193, 255, 0.23)",
+    mesh: ["#030418", "#3A3AF0", "#8A3FE6", "#182AA8", "#A898FA"],
   },
   {
     id: "ocean",
@@ -80,6 +92,7 @@ const themes = [
     bg: "#071A26",
     bgDeep: "#041019",
     tint: "rgba(109, 228, 255, 0.22)",
+    mesh: ["#020D18", "#0070E8", "#00B0C0", "#2A2FD8", "#52E6CC"],
   },
   {
     id: "ember",
@@ -89,6 +102,7 @@ const themes = [
     bg: "#1D1110",
     bgDeep: "#0D0708",
     tint: "rgba(255, 170, 120, 0.23)",
+    mesh: ["#130402", "#F04412", "#D01236", "#7A0C38", "#F5A030"],
   },
   {
     id: "orchid",
@@ -98,6 +112,7 @@ const themes = [
     bg: "#160F24",
     bgDeep: "#090612",
     tint: "rgba(222, 170, 255, 0.22)",
+    mesh: ["#0E0418", "#A042EC", "#E83592", "#4A2CD8", "#F08ED6"],
   },
   {
     id: "aurora",
@@ -107,6 +122,41 @@ const themes = [
     bg: "#0A1C1A",
     bgDeep: "#04100E",
     tint: "rgba(145, 255, 220, 0.22)",
+    mesh: ["#020F0A", "#0FB86C", "#0E92E0", "#6232DC", "#78EEBC"],
+  },
+  {
+    id: "light",
+    label: "Light",
+    appearance: "light",
+    accent: "#2C2C2E",
+    accent2: "#6E6E73",
+    onAccent: "#F5F5F7",
+    bg: "#C4C4C4",
+    bgDeep: "#B4B4B4",
+    tint: "rgba(255, 255, 255, 0.3)",
+    mesh: ["#B4B4B4", "#D8D8D8", "#C6C6C6", "#9E9E9E", "#E4E4E4"],
+  },
+  {
+    id: "metallic",
+    label: "Metallic",
+    accent: "#C7C7CC",
+    accent2: "#8E8E93",
+    onAccent: "#1C1C1E",
+    bg: "#1C1C1E",
+    bgDeep: "#0B0B0C",
+    tint: "rgba(229, 229, 234, 0.22)",
+    mesh: ["#0B0B0C", "#6E6E73", "#2C2C2E", "#9C9CA1", "#D1D1D6"],
+  },
+  {
+    id: "dark",
+    label: "Dark",
+    accent: "#B4B4B4",
+    accent2: "#8A8A8A",
+    onAccent: "#000000",
+    bg: "#0A0A0A",
+    bgDeep: "#000000",
+    tint: "rgba(200, 200, 200, 0.16)",
+    mesh: ["#000000", "#262626", "#121212", "#363636", "#474747"],
   },
 ];
 function readSettings() {
@@ -155,6 +205,7 @@ export default function App() {
       ? initial.theme
       : "arctic",
   );
+  const [ambient, setAmbient] = useState(initial.ambient !== false);
   const [repeat, setRepeat] = useState<RepeatMode>(
     ["off", "one", "all"].includes(initial.repeat) ? initial.repeat : "off",
   );
@@ -346,6 +397,7 @@ export default function App() {
         fps,
         color,
         theme,
+        ambient,
         repeat,
         shuffle,
         queue,
@@ -363,6 +415,7 @@ export default function App() {
       fps,
       color,
       theme,
+      ambient,
       repeat,
       shuffle,
       queue,
@@ -517,40 +570,59 @@ export default function App() {
     }
   };
   const activeTheme = themes.find((value) => value.id === theme)!;
+  useEffect(() => {
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", activeTheme.bgDeep);
+  }, [activeTheme]);
   return (
     <div
       className={`app-root ${playback.isPlaying ? "is-playing" : ""}`}
+      data-appearance={activeTheme.appearance ?? "dark"}
       style={
         {
           "--accent": activeTheme.accent,
           "--accent-2": activeTheme.accent2,
+          ...(activeTheme.onAccent && { "--on-accent": activeTheme.onAccent }),
           "--bg": activeTheme.bg,
           "--bg-deep": activeTheme.bgDeep,
           "--theme-tint": activeTheme.tint,
+          "--m0": activeTheme.mesh[0],
+          "--m1": activeTheme.mesh[1],
+          "--m2": activeTheme.mesh[2],
+          "--m3": activeTheme.mesh[3],
+          "--m4": activeTheme.mesh[4],
         } as React.CSSProperties
       }
     >
-      <header className="app-header">
-        <p className="app-kicker">Audio Lab · v2</p>
-        <h1>Slowed HQ</h1>
-      </header>
-      {updateReady && (
-        <div className="v2-update" role="status">
-          An update is ready.
-          <button
-            type="button"
-            disabled={playback.isPlaying || playback.loading || importing}
-            onClick={() => {
-              void applyUpdate().catch(() =>
-                notify("Update could not be applied. Try again while online."),
-              );
-            }}
-          >
-            Update when paused
-          </button>
-        </div>
-      )}
+      <AmbientBackground
+        engine={engine}
+        palette={activeTheme.mesh}
+        light={activeTheme.appearance === "light"}
+        playing={playback.isPlaying}
+        animate={ambient}
+        running={visible && !sheet && !locked}
+      />
       <main className="app-main">
+        {updateReady && (
+          <div className="glass v2-update" role="status">
+            <span>An update is ready.</span>
+            <button
+              type="button"
+              className="glass-button is-prominent"
+              disabled={playback.isPlaying || playback.loading || importing}
+              onClick={() => {
+                void applyUpdate().catch(() =>
+                  notify(
+                    "Update could not be applied. Try again while online.",
+                  ),
+                );
+              }}
+            >
+              Update when paused
+            </button>
+          </div>
+        )}
         {tab === "library" ? (
           <LibraryScreen
             tracks={tracks}
@@ -621,20 +693,26 @@ export default function App() {
         )}
       </main>
       <nav className="tabbar" aria-label="Main navigation">
-        <button
-          type="button"
-          className={`tabbar-button ${tab === "player" ? "is-active" : ""}`}
-          onClick={() => setTab("player")}
-        >
-          Player
-        </button>
-        <button
-          type="button"
-          className={`tabbar-button ${tab === "library" ? "is-active" : ""}`}
-          onClick={() => setTab("library")}
-        >
-          Library
-        </button>
+        <div className="tabbar-capsule">
+          <button
+            type="button"
+            className={`tabbar-button ${tab === "player" ? "is-active" : ""}`}
+            aria-current={tab === "player" ? "page" : undefined}
+            onClick={() => setTab("player")}
+          >
+            {ICON_WAVEFORM}
+            <span>Player</span>
+          </button>
+          <button
+            type="button"
+            className={`tabbar-button ${tab === "library" ? "is-active" : ""}`}
+            aria-current={tab === "library" ? "page" : undefined}
+            onClick={() => setTab("library")}
+          >
+            {ICON_LIBRARY}
+            <span>Library</span>
+          </button>
+        </div>
       </nav>
       {sheet && (
         <Sheet
@@ -656,124 +734,228 @@ export default function App() {
                 selection={selection}
                 onSelect={selectEq}
               />
-              <section className="v2-effect">
-                <div className="v2-effect-heading">
+              <section className="fx-section">
+                <div className="fx-heading">
                   <h4>Reverb</h4>
-                  <label className="v2-toggle">
+                  <label className="switch-label">
+                    <span>Enabled</span>
                     <input
                       type="checkbox"
+                      role="switch"
+                      className="switch"
                       checked={playback.reverbEnabled}
                       onChange={(event) =>
                         engine.setReverbEnabled(event.target.checked)
                       }
                     />
-                    Enabled
                   </label>
                 </div>
-                <label className="v2-field">
-                  Room
-                  <select
-                    value={playback.reverbPresetId}
-                    onChange={(event) => {
-                      void engine.setReverbPreset(
-                        event.target.value as typeof playback.reverbPresetId,
-                      );
-                    }}
-                  >
-                    {REVERB_PRESETS.map((preset) => (
-                      <option key={preset.id} value={preset.id}>
-                        {preset.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="v2-field">
-                  Wet mix: {Math.round(playback.reverbWet * 100)}%
-                  <input
-                    type="range"
-                    min={0}
-                    max={60}
-                    value={Math.round(playback.reverbWet * 100)}
-                    onChange={(event) =>
-                      engine.setReverbWet(Number(event.target.value) / 100)
-                    }
-                  />
-                </label>
-                <p className="v2-help">
+                <div
+                  className={`group ${playback.reverbEnabled ? "" : "is-dimmed"}`}
+                >
+                  <div className="row">
+                    <label className="row-label" htmlFor="reverb-room">
+                      Room
+                    </label>
+                    <select
+                      id="reverb-room"
+                      className="glass-select"
+                      value={playback.reverbPresetId}
+                      onChange={(event) => {
+                        void engine.setReverbPreset(
+                          event.target.value as typeof playback.reverbPresetId,
+                        );
+                      }}
+                    >
+                      {REVERB_PRESETS.map((preset) => (
+                        <option key={preset.id} value={preset.id}>
+                          {preset.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <label className="row row--stack">
+                    <span className="row-head">
+                      <span className="row-label">Wet mix</span>
+                      <strong className="row-value">
+                        {Math.round(playback.reverbWet * 100)}%
+                      </strong>
+                    </span>
+                    <input
+                      className="range"
+                      type="range"
+                      min={0}
+                      max={60}
+                      value={Math.round(playback.reverbWet * 100)}
+                      style={
+                        {
+                          "--p": Math.round(playback.reverbWet * 100) / 60,
+                        } as React.CSSProperties
+                      }
+                      onChange={(event) =>
+                        engine.setReverbWet(Number(event.target.value) / 100)
+                      }
+                    />
+                  </label>
+                </div>
+                <p className="footnote">
                   Rooms you use online are saved for offline playback.
                 </p>
               </section>
             </>
           )}
           {sheet === "appearance" && (
-            <section className="v2-effect">
-              <label className="v2-toggle">
-                <input
-                  type="checkbox"
-                  checked={waveform}
-                  onChange={(event) => setWaveform(event.target.checked)}
-                />
-                Show oscilloscope
-              </label>
-              <label className="v2-field">
-                Oscilloscope refresh: up to {fps} Hz
-                <input
-                  type="range"
-                  min={24}
-                  max={120}
-                  step={1}
-                  value={fps}
-                  onChange={(event) => setFps(Number(event.target.value))}
-                />
-              </label>
-              <p className="v2-help">
-                120 Hz remains available. Lower refresh uses less power. Drawing
-                pauses behind menus and when the display is hidden.
-              </p>
-              <label className="v2-field">
-                Waveform color
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(event) => setColor(event.target.value)}
-                />
-              </label>
-              <label className="v2-field">
-                Theme
-                <select
-                  value={theme}
-                  onChange={(event) => setTheme(event.target.value)}
+            <>
+              <section className="fx-section">
+                <div className="fx-heading">
+                  <h4>Oscilloscope</h4>
+                </div>
+                <div className="group">
+                  <label className="row">
+                    <span className="row-label">Show oscilloscope</span>
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      className="switch"
+                      checked={waveform}
+                      onChange={(event) => setWaveform(event.target.checked)}
+                    />
+                  </label>
+                  <div className="row row--stack">
+                    <label className="row-head" htmlFor="scope-fps">
+                      <span className="row-label">Oscilloscope refresh</span>
+                      <strong className="row-value">up to {fps} Hz</strong>
+                    </label>
+                    <input
+                      id="scope-fps"
+                      className="range"
+                      type="range"
+                      min={24}
+                      max={120}
+                      step={1}
+                      value={fps}
+                      style={{ "--p": (fps - 24) / 96 } as React.CSSProperties}
+                      onChange={(event) => setFps(Number(event.target.value))}
+                    />
+                    <div className="range-ticks" aria-hidden="true">
+                      <span style={{ "--t": 0 } as React.CSSProperties}>
+                        24
+                      </span>
+                      <span style={{ "--t": 0.375 } as React.CSSProperties}>
+                        60
+                      </span>
+                      <span style={{ "--t": 1 } as React.CSSProperties}>
+                        120
+                      </span>
+                    </div>
+                  </div>
+                  <label className="row">
+                    <span className="row-label">Waveform color</span>
+                    <input
+                      className="color-input"
+                      type="color"
+                      value={color}
+                      onChange={(event) => setColor(event.target.value)}
+                    />
+                  </label>
+                </div>
+                <p className="footnote">
+                  120 Hz remains available. Lower refresh uses less power.
+                  Drawing pauses behind menus and when the display is hidden.
+                </p>
+              </section>
+              <section className="fx-section">
+                <div className="fx-heading">
+                  <h4>Background</h4>
+                </div>
+                <div className="group">
+                  <label className="row">
+                    <span className="row-label">Moving background</span>
+                    <input
+                      type="checkbox"
+                      role="switch"
+                      className="switch"
+                      checked={ambient}
+                      onChange={(event) => setAmbient(event.target.checked)}
+                    />
+                  </label>
+                </div>
+                <p className="footnote">
+                  Drifts constantly and moves faster only with bass below 130
+                  Hz. Pauses behind menus and in Dark screen. Turn it off to
+                  save power.
+                </p>
+              </section>
+              <section className="fx-section">
+                <div className="fx-heading">
+                  <h4 id="theme-heading">Theme</h4>
+                </div>
+                <div
+                  className="theme-grid"
+                  role="radiogroup"
+                  aria-labelledby="theme-heading"
                 >
                   {themes.map((value) => (
-                    <option key={value.id} value={value.id}>
-                      {value.label}
-                    </option>
+                    <label
+                      key={value.id}
+                      className={`theme-option ${theme === value.id ? "is-selected" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="theme"
+                        className="v2-visually-hidden"
+                        value={value.id}
+                        checked={theme === value.id}
+                        onChange={() => setTheme(value.id)}
+                      />
+                      <span
+                        className="theme-swatch"
+                        aria-hidden="true"
+                        style={{
+                          background: `radial-gradient(circle at 52% 46%, ${value.mesh[4]}, transparent 42%), radial-gradient(circle at 22% 24%, ${value.mesh[1]}, transparent 62%), radial-gradient(circle at 84% 34%, ${value.mesh[2]}, transparent 58%), radial-gradient(circle at 30% 86%, ${value.mesh[3]}, transparent 64%), ${value.mesh[0]}`,
+                        }}
+                      />
+                      <span className="theme-name">{value.label}</span>
+                    </label>
                   ))}
-                </select>
-              </label>
-              <button
-                type="button"
-                className="transport-button"
-                onClick={() => {
-                  setSheet(null);
-                  setLocked(true);
-                }}
-              >
-                Dark screen
-              </button>
-            </section>
+                </div>
+              </section>
+              <section className="fx-section">
+                <button
+                  type="button"
+                  className="glass-button is-block"
+                  onClick={() => {
+                    setSheet(null);
+                    setLocked(true);
+                  }}
+                >
+                  {ICON_MOON}
+                  Dark screen
+                </button>
+                <p className="footnote">
+                  Blacks out the display while audio keeps playing. The
+                  oscilloscope stops drawing until you exit.
+                </p>
+              </section>
+            </>
           )}
           {sheet === "queue" &&
             (queue.length ? (
-              <>
-                <button
-                  type="button"
-                  className="transport-button"
-                  onClick={() => setQueue([])}
-                >
-                  Clear queue
-                </button>
-                <ul className="queue-list">
+              <section className="fx-section">
+                <div className="fx-heading">
+                  <h4>
+                    Up next · {queue.length} track
+                    {queue.length === 1 ? "" : "s"}
+                  </h4>
+                  <button
+                    type="button"
+                    className="glass-button is-destructive is-compact"
+                    onClick={() => setQueue([])}
+                  >
+                    Clear queue
+                  </button>
+                </div>
+                <ul className="group queue-list">
                   {queue.map((id, index) => {
                     const queued = tracks.find((value) => value.id === id);
                     return queued ? (
@@ -789,28 +971,35 @@ export default function App() {
                             void playTrack(id);
                           }}
                         >
-                          {index + 1}. {queued.displayName}
+                          <span className="queue-index">{index + 1}</span>
+                          <span className="queue-title">
+                            {queued.displayName}
+                          </span>
                         </button>
                         <button
                           type="button"
-                          className="danger-button"
+                          className="icon-button is-destructive"
+                          aria-label={`Remove ${queued.displayName} from queue`}
+                          title="Remove"
                           onClick={() =>
                             setQueue((previous) =>
                               previous.filter((_, i) => i !== index),
                             )
                           }
                         >
-                          Remove
+                          {ICON_MINUS}
                         </button>
                       </li>
                     ) : null;
                   })}
                 </ul>
-              </>
+              </section>
             ) : (
-              <p className="empty-state">
-                Queue is empty. Add tracks from Library.
-              </p>
+              <div className="empty-card is-plain">
+                <p className="empty-state">
+                  Queue is empty. Add tracks from Library.
+                </p>
+              </div>
             ))}
         </Sheet>
       )}

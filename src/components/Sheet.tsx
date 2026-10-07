@@ -52,7 +52,7 @@ export function Sheet({
           <h3>{title}</h3>
           <button
             type="button"
-            className="header-button"
+            className="icon-button sheet-close"
             aria-label={`Close ${title}`}
             onClick={onClose}
           >
